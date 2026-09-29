@@ -20,6 +20,18 @@ venv/
 /outputs/
 solution/model/*.pt
 
+# ---------------------------------------------------------------------------
+# The organiser's own scripts - third-party code, not yours to redistribute
+# ---------------------------------------------------------------------------
+# src/eval/official_oracle/ and src/submit/official/ hold byte-for-byte copies
+# of the scorer/validator from the official submission kit. Keep them on disk
+# (the freeze tests and the whole eval chain need them) but out of a public
+# repository. Copy them back from the kit after cloning:
+#   python scripts/freeze_official.py --source <official_kit.zip>
+# A checkout without them is fine - tests/test_official_freeze.py skips.
+src/eval/official_oracle/
+src/submit/official/
+
 # NOTE: .gitignore has no inline comments - a trailing `# 553 MB` becomes part
 # of the pattern and the rule silently stops matching. Keep comments on their
 # own lines, and always anchor directory patterns with a leading slash: a bare
