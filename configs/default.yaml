@@ -1,0 +1,187 @@
+# =====================================================================
+# 竞赛项目配置模板 · 常量唯一事实源
+#
+# 治理规则：目标 / 路径 / 阈值 / 类定义 / 文件名等决策常量只在本文件定义；
+# src/**、scripts/**、tests/** 一律不得硬编码。改配置先改本文件，
+# 并把结论留痕到 docs/experiments.md（谁改的、为什么、证据是什么）。
+#
+# 用法：把 REPLACE_ME 全部换成本赛题的真实值。逐项说明见 TEMPLATE.md。
+# 校验：make preflight —— 它会拒绝在身份信息未填时继续构建提交包。
+# =====================================================================
+
+project:
+  name: REPLACE_ME                 # 仓库/项目短名，如 my-comp-seg
+  version: "1.0.0"
+  seed: 42
+
+competition:
+  # ---- 赛题身份（防交错比赛，见 src/submit/identity.py）----
+  # ⚠️ 工作区里往往同时存在多个赛题。这四项是最后一道防线：
+  #    上传前必须用 id + official_page 与平台页面逐字对照。
+  id: "REPLACE_ME"                 # 平台 URL 里的 type= 值，如 <COMPETITION_ID>
+  slug: "REPLACE_ME"
+  platform: "REPLACE_ME"           # 如 https://challenge.xfyun.cn
+  name: "REPLACE_ME"               # 平台页面显示的完整赛题名
+  official_page: "REPLACE_ME"      # 带 type= 的完整 URL
+
+  # 明确列出「不是本赛题」的相邻赛题，构建时会打印出来提醒
+  not_this_competition: []
+  # 例：
+  #   - id: "other-comp"
+  #     name: "另一个赛题"
+  #     why: "三分类 / Macro-F1 / 提交 predictions.csv，格式完全不同"
+
+  organizer: "REPLACE_ME"
+  task: REPLACE_ME                 # instance_segmentation / classification / detection
+  track: "REPLACE_ME"
+
+  # ---- 时间线（填平台公布的，不要凭印象）----
+  schedule:
+    a_board: "REPLACE_ME"
+    b_board: "REPLACE_ME"
+    final: "REPLACE_ME"
+  a_board_daily_submit_limit: 3
+  # 赛后复核范围与容差：官方口径不一致时按更严格的一份准备
+  post_review_scope: "REPLACE_ME"
+  post_review_map_tolerance: 0.005
+
+  # ---- 提交用类别编号（result.json 的 category_id）----
+  # ⚠️ 提交编号与训练 COCO 标注编号经常不同，必须显式转换，写错会把类对调。
+  submit_classes:
+    0: class_a
+    1: class_b
+  submit_labels: [0, 1]
+
+  # 训练 COCO category_id -> 提交 category_id
+  # 转换只在 src/data/coco.py 一处完成
+  gt_to_submit_category:
+    1: 0
+    2: 1
+
+  # ---- 评测指标（以官方脚本为准，这里只是记录）----
+  metric: REPLACE_ME               # 如 mask_map / bbox_map / macro_f1
+  metric_name: "REPLACE_ME"
+  iou_thresholds: [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+  recall_points: 101
+  max_dets: [1, 10, 100]
+  area_range: all
+  ignore_overlap_threshold: 0.50   # pred∩ignore / pred >= 0.5 -> 不计 TP 也不计 FP
+
+  # ---- 数据规模（`make data` 会打印实测值，照抄过来）----
+  # 这些数字是防交错比赛的第二道防线：数量对不上就说明数据不是本赛题的。
+  # A/B 榜是讯飞/天池常见结构；只有一个测试集时把两组都指向同一份即可。
+  n_test_a_images: 0
+  n_test_b_images: 0
+  # 仅当赛题把每张图发布两份（原图 + 变换副本）时填写源图数，用于启用
+  # 「增强图配对」这条最强身份断言；没有这种结构就留 0（断言自动跳过）。
+  n_test_b_sources: 0
+  image_size: [0, 0]               # (W, H)
+
+  # ---- 提交约束 ----
+  deadline: "REPLACE_ME"
+  submit_limit: 3
+  # 会作为 b_data_version 的值写进 solution_commit.txt（字段名由平台规定）
+  b_data_version: "REPLACE_ME"
+
+  # ---- 规则约束（照抄官方禁止事项）----
+  external_data_allowed: false
+  allowed_pretrained: ["imagenet", "coco"]
+  online_api_allowed: false
+  reproduction_env: "REPLACE_ME"
+
+data:
+  root: data
+  # 训练集
+  train_images: REPLACE_ME
+  instances_json: REPLACE_ME
+  ignore_json: REPLACE_ME         # 若无忽略区域，指向空文件或留空
+  # 测试集（A/B 榜结构；只有一个测试集时两组填同一份）
+  test_a_images: REPLACE_ME
+  test_a_manifest: REPLACE_ME
+  test_b_images: REPLACE_ME
+  test_b_manifest: REPLACE_ME     # 公开图像清单（只有 image_id/width/height）
+  processed_dir: data/processed
+
+  # 源图分组：同一张源图的多个版本（原图 + 增强图）必须落在同一折，否则泄漏。
+  # 按本赛题的命名规则填写。
+  source_group:
+    aug_suffix: "_aug1"            # 增强图后缀；没有增强图就留空
+    strip_suffixes: [".jpg", ".jpeg", ".png", ".bmp"]
+
+split:
+  strategy: grouped_kfold_by_source   # 禁止按图随机划分
+  n_folds: 5
+  seed: 42
+  output_dir: data/processed/splits
+
+eval:
+  # 官方评分脚本：从官方提交包解压到该路径，逐字节冻结（SHA 记录在 manifest）
+  oracle_script: src/eval/official_oracle/official_evaluate.py
+  oracle_freeze_manifest: src/official_freeze.json
+  output_dir: outputs/reports
+  local_fast_eval: true
+
+submit:
+  # 提交包根目录【恰好】若干普通文件，不得有目录项/符号链接/加密文件
+  b_zip_name: b_submission.zip
+  b_root_files: [result.json, solution_commit.txt]
+  result_json_name: result.json
+  commit_name: solution_commit.txt
+  result_version: "1.0"
+
+  commit_fields: [solution_name, hash_algorithm, solution_sha256, solution_size, b_data_version]
+  commit_solution_name: solution.zip
+  commit_hash_algorithm: SHA-256
+
+  # 官方校验工具（冻结）
+  official_validator: src/submit/official/validate_b_submission.py
+  official_parser: src/submit/official/submission.py
+  official_commit_tool: src/submit/official/generate_solution_commit.py
+
+  # 体积上限（照抄官方）
+  max_archive_bytes: 1073741824
+  max_result_bytes: 1073741824
+  max_commit_bytes: 65536
+  max_solution_zip_bytes: 5368709120
+  max_solution_unzip_bytes: 10737418240
+
+  output_dir: outputs/submissions
+
+train:
+  framework: REPLACE_ME            # 如 torchvision_maskrcnn
+  backbone: REPLACE_ME
+  pretrained: coco
+  epochs: 12
+  batch_size: 2
+  lr: 0.005
+  momentum: 0.9
+  weight_decay: 0.0005
+  scheduler: cosine
+  amp: true
+  num_workers: 4
+  grad_clip: 10.0
+  # 原图往往远大于训练分辨率；短边缩放是时间预算与精度之间的取舍
+  train_short_side: 640
+  test_short_side: 640
+  aug:
+    hflip_p: 0.5
+  # ⚠️ 实例分割禁用 MixUp/CutMix：掩膜无法正确混合
+  forbidden_augmentations: [mixup, cutmix]
+  output_dir: outputs/checkpoints
+
+inference:
+  # 推理分辨率列表。多尺度会各跑一遍再按类别 NMS 融合。
+  # ⚠️ 必须与提交时一致，否则赛后复现算不出同样分数。
+  short_sides: [640]
+  score_threshold: 0.05            # COCO 建议低阈值多召回（受 maxDets 约束）
+  mask_threshold: 0.5
+  max_detections_per_image: 100    # 与官方 maxDets 上限一致
+  batch_size: 1
+  raw_predictions_dir: outputs/predictions
+
+env_pins:
+  # 训练侧与评测侧版本都记录固定，复现争议时才有据可查
+  python: "REPLACE_ME"
+  numpy: "REPLACE_ME"
+  pycocotools: "REPLACE_ME"
+  pytest: "REPLACE_ME"

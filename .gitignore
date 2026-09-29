@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Test scratch space (kept inside the repo for sandboxed runs)
+.pytest_tmp/
+.pytest_cache/
+
+# ---------------------------------------------------------------------------
+# Competition data and trained artefacts - never commit
+# ---------------------------------------------------------------------------
+# The dataset belongs to the organiser and is usually hundreds of MB; weights
+# are hundreds of MB each, well over GitHub's 100 MB per-file limit (which
+# applies to private repositories too). Back the big files up elsewhere -
+# a GitHub Release asset can be up to 2 GiB and does not enter git history.
+/data/
+/outputs/
+solution/model/*.pt
+
+# NOTE: .gitignore has no inline comments - a trailing `# 553 MB` becomes part
+# of the pattern and the rule silently stops matching. Keep comments on their
+# own lines, and always anchor directory patterns with a leading slash: a bare
+# `data/` also matches `src/data/`.
+
+# OS
+.DS_Store
